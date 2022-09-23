@@ -26,9 +26,9 @@ class Session
                 $params = session_get_cookie_params();
                 session_set_cookie_params(
                     $params['lifetime'],
-                    $params['path'].'; SameSite=Lax',
+                    $params['path'].'; SameSite=Strict',
                     $params['domain'],
-                    $params['secure'],
+                    isSecure(),
                     $params['httponly']
                 );
             }
@@ -38,7 +38,8 @@ class Session
                 'save_path' => $path,
                 'cookie_httponly' => true,
                 'gc_probability' => 25,
-                'cookie_samesite' => 'Lax', // works only for php  >= 7.3
+                'cookie_samesite' => 'Strict', // works only for php  >= 7.3
+                'cookie_secure' => isSecure(),
             ]);
 
             if (!$started) {

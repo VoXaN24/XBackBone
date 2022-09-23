@@ -3,6 +3,7 @@
 namespace App\Controllers;
 
 use App\Database\Migrator;
+use App\Web\Theme;
 use League\Flysystem\FileNotFoundException;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -26,18 +27,22 @@ class AdminController extends Controller
             $settings[$setting->key] = $setting->value;
         }
 
-        $settings['default_user_quota'] = humanFileSize($this->getSetting('default_user_quota', stringToBytes('1G')), 0, true);
+        $settings['default_user_quota'] = humanFileSize(
+            $this->getSetting('default_user_quota', stringToBytes('1G')),
+            0,
+            true
+        );
 
         return view()->render($response, 'dashboard/system.twig', [
-            'usersCount' => $usersCount = $this->database->query('SELECT COUNT(*) AS `count` FROM `users`')->fetch()->count,
-            'mediasCount' => $mediasCount = $this->database->query('SELECT COUNT(*) AS `count` FROM `uploads`')->fetch()->count,
-            'orphanFilesCount' => $orphanFilesCount = $this->database->query('SELECT COUNT(*) AS `count` FROM `uploads` WHERE `user_id` IS NULL')->fetch()->count,
-            'totalSize' => humanFileSize($totalSize = $this->database->query('SELECT SUM(`current_disk_quota`) AS `sum` FROM `users`')->fetch()->sum ?? 0),
+            'usersCount' => $this->database->query('SELECT COUNT(*) AS `count` FROM `users`')->fetch()->count,
+            'mediasCount' => $this->database->query('SELECT COUNT(*) AS `count` FROM `uploads`')->fetch()->count,
+            'orphanFilesCount' => $this->database->query('SELECT COUNT(*) AS `count` FROM `uploads` WHERE `user_id` IS NULL')->fetch()->count,
+            'totalSize' => humanFileSize($this->database->query('SELECT SUM(`current_disk_quota`) AS `sum` FROM `users`')->fetch()->sum ?? 0),
             'post_max_size' => ini_get('post_max_size'),
             'upload_max_filesize' => ini_get('upload_max_filesize'),
             'installed_lang' => $this->lang->getList(),
             'forced_lang' => $request->getAttribute('forced_lang'),
-            'php_version' => phpversion(),
+            'php_version' => PHP_VERSION,
             'max_memory' => ini_get('memory_limit'),
             'settings' => $settings,
         ]);
@@ -77,13 +82,15 @@ class AdminController extends Controller
      */
     public function getThemes(Response $response): Response
     {
-        $apiJson = json_decode(file_get_contents('https://bootswatch.com/api/4.json'));
+        $themes = make(Theme::class)->availableThemes();
 
         $out = [];
 
-        $out['Default - Bootstrap 4 default theme'] = 'https://bootswatch.com/_vendor/bootstrap/dist/css/bootstrap.min.css';
-        foreach ($apiJson->themes as $theme) {
-            $out["{$theme->name} - {$theme->description}"] = $theme->cssMin;
+        foreach ($themes as $vendor => $list) {
+            $out["-- {$vendor} --"] = null;
+            foreach ($list as $name => $url) {
+                $out[$name] = "{$vendor}|{$url}";
+            }
         }
 
         return json($response, $out);

@@ -2,8 +2,8 @@
 
 namespace App\Controllers;
 
-use App\Database\Queries\TagQuery;
-use App\Database\Queries\UserQuery;
+use App\Database\Repositories\TagRepository;
+use App\Database\Repositories\UserRepository;
 use App\Exceptions\ValidationException;
 use Exception;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -45,7 +45,7 @@ class UploadController extends Controller
         try {
             $file = $this->validateFile($request, $response);
 
-            $user = make(UserQuery::class)->get($request, $this->session->get('user_id'));
+            $user = make(UserRepository::class)->get($request, $this->session->get('user_id'));
 
             $this->validateUser($request, $response, $file, $user);
         } catch (ValidationException $e) {
@@ -123,7 +123,9 @@ class UploadController extends Controller
      */
     protected function validateFile(Request $request, Response $response)
     {
-        if ($request->getServerParams()['CONTENT_LENGTH'] > stringToBytes(ini_get('post_max_size'))) {
+        $iniValue = ini_get('post_max_size');
+        $maxPostSize = $iniValue === '0' ? INF : stringToBytes($iniValue);
+        if ($request->getServerParams()['CONTENT_LENGTH'] > $maxPostSize) {
             $this->json['message'] = 'File too large (post_max_size too low?).';
 
             throw new ValidationException(json($response, $this->json, 400));
@@ -223,8 +225,8 @@ class UploadController extends Controller
 
         [$type, $subtype] = explode('/', $mime);
 
-        /** @var TagQuery $query */
-        $query = make(TagQuery::class);
+        /** @var TagRepository $query */
+        $query = make(TagRepository::class);
         $query->addTag($type, $mediaId);
 
         if ($type === 'application' || $subtype === 'gif') {

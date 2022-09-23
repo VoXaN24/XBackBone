@@ -8,7 +8,7 @@ use Tests\TestCase;
 
 class RegisterControllerTest extends TestCase
 {
-    protected function setUp()
+    protected function setUp(): void
     {
         parent::setUp();
         $this->updateSetting('register_enabled', 'on');
@@ -97,7 +97,7 @@ class RegisterControllerTest extends TestCase
         $this->assertSame(route('login'), $response->getHeaderLine('Location'));
 
         $result = $this->database()->query('SELECT * FROM users WHERE id = ?', $userId)->fetch();
-        $this->assertSame('1', $result->active);
+        $this->assertSame(1, (int) $result->active);
         $this->assertNull($result->activate_token);
     }
 

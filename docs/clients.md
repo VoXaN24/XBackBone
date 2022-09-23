@@ -16,6 +16,12 @@ and paste the URL copied from XBackBone, and all should work out-of-the-box.
 
 If for whatever reason you need to change the instance url or the token, just edit the settings of the XBackBone plugin.
 
+## MagicCap (Mac and Linux)
+MagicCap supports the same file format used by ShareX.
+
+Just download the ShareX config file from your profile, and then on MagicCap open the Preferences > Uploader settings and choose ShareX.
+Set the path to the file you have downloaded, and you are good to go!
+
 ## uPic (Mac)
 This tool does not support plugins or custom configuration, but you can configure it manually:
 In preferences, you should add "Custom" host and configure it as follows:

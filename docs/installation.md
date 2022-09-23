@@ -7,7 +7,7 @@ nav_order: 2
 # Installation
 
 ### Prerequisites
-XBackBone require PHP >= `7.1`, with installed the required extensions:
+XBackBone require PHP >= `7.3`, with installed the required extensions:
 + `php-sqlite3` for SQLite.
 + `php-mysql` for MariaDB/MySQL.
 + `php-gd` image manipualtion library.
@@ -65,4 +65,4 @@ For futher and advanced configurations, see the [configuration page](configurati
 ## Docker deployment
 Alternatively, a docker container is available.
 
-[Docker container](https://hub.docker.com/r/pe46dro/xbackbone-docker){: .btn .btn-purple }
+[Docker container](https://fleet.linuxserver.io/image?name=linuxserver/xbackbone){: .btn .btn-purple }

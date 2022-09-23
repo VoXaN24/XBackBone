@@ -3,6 +3,56 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
+## Unreleased
+
+## [3.6.0] - 2022-06-20
+### Changed
+- Improved embedding on discord of large videos.
+- Releases are now compressed for faster downloads
+- Updated translations
+
+### Fixed
+- Fixed deprecation notices on php >= 8 
+- Fixed embed UA for Discord.
+- Fixed error with post_max_size = 0
+
+### Removed
+- Support for php 7.2
+
+## [3.5.1] - 2021-10-22
+### Changed
+- Fixed embed UA for Discord.
+- Updated translations.
+
+## [3.5.0] - 2021-09-05
+### Added
+- Support for theme-park.dev themes.
+- Updated translations.
+
+### Fixed
+- Wrong css when reapplying the default theme.
+
+### Removed
+- Dropped theme cli command.
+
+## [3.4.1] - 2021-08-11
+### Added
+- Toggle to disable embeds.
+
+### Changed
+- Raw url copying now contains also the file extension.
+
+## [3.4.0] - 2021-08-01
+### Added
+- Added image support for OG for Discord only.
+
+### Changed
+- Updated translations.
+- Dropped support for PHP 7.1
+
+### Fixed
+- Fixed possible XSS and CSRF attacks.
+
 ## [3.3.5] - 2021-04-25
 ### Fixed
 - Removed OG integration for discord.

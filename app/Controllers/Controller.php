@@ -3,7 +3,7 @@
 namespace App\Controllers;
 
 use App\Database\DB;
-use App\Database\Queries\UserQuery;
+use App\Database\Repositories\UserRepository;
 use App\Web\Lang;
 use App\Web\Session;
 use App\Web\ValidationHelper;
@@ -89,7 +89,7 @@ abstract class Controller
      */
     protected function updateUserQuota(Request $request, $userId, $fileSize, $dec = false)
     {
-        $user = make(UserQuery::class)->get($request, $userId);
+        $user = make(UserRepository::class)->get($request, $userId);
 
         if ($dec) {
             $tot = max($user->current_disk_quota - $fileSize, 0);
@@ -128,12 +128,13 @@ abstract class Controller
 
         // Workaround for php <= 7.3
         if (PHP_VERSION_ID < 70300) {
-            setcookie('remember', "{$selector}:{$token}", $expire, '; SameSite=Lax', '', false, true);
+            setcookie('remember', "{$selector}:{$token}", $expire, '; SameSite=Strict', '', isSecure(), true);
         } else {
             setcookie('remember', "{$selector}:{$token}", [
                 'expires' => $expire,
                 'httponly' => true,
-                'samesite' => 'Lax',
+                'samesite' => 'Strict',
+                'secure' => isSecure(),
             ]);
         }
     }

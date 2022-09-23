@@ -67,10 +67,32 @@ if (!function_exists('isDisplayableImage')) {
             'image/x-icon',
             'image/jpeg',
             'image/png',
-            'image/svg',
-            'image/svg+xml',
             'image/tiff',
             'image/webp',
+        ]);
+    }
+}
+
+if (!function_exists('isEmbeddable')) {
+    /**
+     * @param  ?string  $mime
+     *
+     * @return bool
+     */
+    function isEmbeddable(?string $mime): bool
+    {
+        return in_array($mime, [
+            'image/apng',
+            'image/bmp',
+            'image/gif',
+            'image/x-icon',
+            'image/jpeg',
+            'image/png',
+            'image/tiff',
+            'image/webp',
+            'video/mp4',
+            'video/ogg',
+            'video/webm',
         ]);
     }
 }
@@ -95,13 +117,13 @@ if (!function_exists('stringToBytes')) {
         switch ($last) {
             case 't':
                 $val *= 1024;
-                // no break
+            // no break
             case 'g':
                 $val *= 1024;
-                // no break
+            // no break
             case 'm':
                 $val *= 1024;
-                // no break
+            // no break
             case 'k':
                 $val *= 1024;
         }
@@ -262,7 +284,7 @@ if (!function_exists('param')) {
      * @param  string  $name
      * @param  null  $default
      *
-     * @return string
+     * @return mixed
      */
     function param(Request $request, string $name, $default = null)
     {
@@ -272,11 +294,7 @@ if (!function_exists('param')) {
             $params = $request->getParsedBody();
         }
 
-        if (isset($params[$name])) {
-            return $params[$name];
-        }
-
-        return $default;
+        return $params[$name] ?? $default;
     }
 }
 
@@ -311,37 +329,6 @@ if (!function_exists('lang')) {
     function lang(string $key, $args = []): string
     {
         return resolve('lang')->get($key, $args);
-    }
-}
-
-if (!function_exists('isBot')) {
-    /**
-     * @param  string  $userAgent
-     *
-     * @return bool
-     */
-    function isBot(string $userAgent)
-    {
-        $bots = [
-            'TelegramBot',
-            'facebookexternalhit/',
-            'Facebot',
-            'curl/',
-            'wget/',
-            'WhatsApp/',
-            'Slack',
-            'Twitterbot/',
-            'discord',
-            'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.10; rv:38.0) Gecko/20100101 Firefox/38.0' // discord image bot
-        ];
-
-        foreach ($bots as $bot) {
-            if (stripos($userAgent, $bot) !== false) {
-                return true;
-            }
-        }
-
-        return false;
     }
 }
 
@@ -493,5 +480,51 @@ if (!function_exists('platform_mail')) {
     function platform_mail($mailbox = 'no-reply'): string
     {
         return $mailbox.'@'.str_ireplace('www.', '', parse_url(resolve('config')['base_url'], PHP_URL_HOST));
+    }
+}
+
+if (!function_exists('must_be_escaped')) {
+    /**
+     * Return the system no-reply mail.
+     *
+     * @param $mime
+     * @return bool
+     */
+    function must_be_escaped($mime): bool
+    {
+        $mimes = [
+            'text/htm',
+            'image/svg',
+        ];
+
+        foreach ($mimes as $m) {
+            if (stripos($mime, $m) !== false) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+}
+
+if (!function_exists('isSecure')) {
+    /**
+     * @return bool
+     */
+    function isSecure(): bool
+    {
+        return (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+            || (!empty($_SERVER['SERVER_PORT']) && $_SERVER['SERVER_PORT'] === 443);
+    }
+}
+
+if (!function_exists('glue')) {
+    /**
+     * @param  mixed  ...$pieces
+     * @return string
+     */
+    function glue(...$pieces): string
+    {
+        return '/'.implode('/', $pieces);
     }
 }

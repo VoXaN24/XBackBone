@@ -3,9 +3,12 @@
 
 namespace App\Controllers;
 
-use App\Database\Queries\UserQuery;
+use App\Database\Repositories\UserRepository;
+use App\Web\Theme;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use Slim\Exception\HttpBadRequestException;
+use Slim\Exception\HttpInternalServerErrorException;
 
 class SettingController extends Controller
 {
@@ -14,6 +17,7 @@ class SettingController extends Controller
      * @param  Response  $response
      *
      * @return Response
+     * @throws HttpInternalServerErrorException
      */
     public function saveSettings(Request $request, Response $response): Response
     {
@@ -34,13 +38,14 @@ class SettingController extends Controller
         // quota
         $this->updateSetting('quota_enabled', param($request, 'quota_enabled', 'off'));
         $this->updateSetting('default_user_quota', stringToBytes(param($request, 'default_user_quota', '1G')));
-        $user = make(UserQuery::class)->get($request, $this->session->get('user_id'));
+        $user = make(UserRepository::class)->get($request, $this->session->get('user_id'));
         $this->setSessionQuotaInfo($user->current_disk_quota, $user->max_disk_quota);
 
         $this->updateSetting('custom_head', param($request, 'custom_head'));
         $this->updateSetting('recaptcha_enabled', param($request, 'recaptcha_enabled', 'off'));
         $this->updateSetting('recaptcha_site_key', param($request, 'recaptcha_site_key'));
         $this->updateSetting('recaptcha_secret_key', param($request, 'recaptcha_secret_key'));
+        $this->updateSetting('image_embeds', param($request, 'image_embeds'));
 
         $this->applyTheme($request);
         $this->applyLang($request);
@@ -63,25 +68,29 @@ class SettingController extends Controller
         }
     }
 
-
     /**
      * @param  Request  $request
+     * @throws HttpInternalServerErrorException
      */
     public function applyTheme(Request $request)
     {
-        if (param($request, 'css') !== null) {
-            if (!is_writable(BASE_DIR.'static/bootstrap/css/bootstrap.min.css')) {
-                $this->session->alert(lang('cannot_write_file'), 'danger');
-            } else {
-                file_put_contents(BASE_DIR.'static/bootstrap/css/bootstrap.min.css', file_get_contents(param($request, 'css')));
-            }
+        $css = param($request, 'css');
+        if ($css === null) {
+            return;
+        }
 
-            // if is default, remove setting
-            if (param($request, 'css') !== 'https://bootswatch.com/_vendor/bootstrap/dist/css/bootstrap.min.css') {
-                $this->updateSetting('css', param($request, 'css'));
-            } else {
-                $this->database->query('DELETE FROM `settings` WHERE `key` = \'css\'');
-            }
+        if (!is_writable(BASE_DIR.'static/bootstrap/css/bootstrap.min.css')) {
+            $this->session->alert(lang('cannot_write_file'), 'danger');
+            throw new HttpInternalServerErrorException($request);
+        }
+
+        make(Theme::class)->applyTheme($css);
+
+        // if is default, remove setting
+        if ($css !== Theme::default()) {
+            $this->updateSetting('css', $css);
+        } else {
+            $this->database->query('DELETE FROM `settings` WHERE `key` = \'css\'');
         }
     }
 
@@ -92,9 +101,15 @@ class SettingController extends Controller
     private function updateSetting($key, $value = null)
     {
         if (!$this->database->query('SELECT `value` FROM `settings` WHERE `key` = '.$this->database->getPdo()->quote($key))->fetch()) {
-            $this->database->query('INSERT INTO `settings`(`key`, `value`) VALUES ('.$this->database->getPdo()->quote($key).', ?)', $value);
+            $this->database->query(
+                'INSERT INTO `settings`(`key`, `value`) VALUES ('.$this->database->getPdo()->quote($key).', ?)',
+                $value
+            );
         } else {
-            $this->database->query('UPDATE `settings` SET `value`=? WHERE `key` = '.$this->database->getPdo()->quote($key), $value);
+            $this->database->query(
+                'UPDATE `settings` SET `value`=? WHERE `key` = '.$this->database->getPdo()->quote($key),
+                $value
+            );
         }
     }
 }

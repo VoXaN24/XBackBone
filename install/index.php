@@ -1,6 +1,6 @@
 <?php
 
-((PHP_MAJOR_VERSION >= 7 && PHP_MINOR_VERSION >= 1) || PHP_MAJOR_VERSION > 7) ?: die('Sorry, PHP 7.1 or above is required to run XBackBone.');
+((PHP_MAJOR_VERSION >= 7 && PHP_MINOR_VERSION >= 3) || PHP_MAJOR_VERSION > 7) ?: die('Sorry, PHP 7.3 or above is required to run XBackBone.');
 require __DIR__.'/../vendor/autoload.php';
 
 use App\Database\Migrator;
@@ -9,13 +9,13 @@ use App\Web\Session;
 use App\Web\View;
 use DI\Bridge\Slim\Bridge;
 use DI\ContainerBuilder;
-use function DI\factory;
-use function DI\get;
-use function DI\value;
 use League\Flysystem\FileExistsException;
 use Psr\Container\ContainerInterface as Container;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
+use function DI\factory;
+use function DI\get;
+use function DI\value;
 
 define('PLATFORM_VERSION', json_decode(file_get_contents(__DIR__.'/../composer.json'))->version);
 define('BASE_DIR', realpath(__DIR__.'/../').DIRECTORY_SEPARATOR);
@@ -175,12 +175,12 @@ $app->post('/', function (Request $request, Response $response, \DI\Container $c
 
     $storage = $container->get('storage');
     // check if the storage is valid
-    $storageTestFile = 'storage_test.xbackbone.txt';
+    $storageTestFile = 'storage_test.txt';
     try {
         try {
-            $success = $storage->write($storageTestFile, 'XBACKBONE_TEST_FILE');
+            $success = $storage->write($storageTestFile, 'TEST_FILE');
         } catch (FileExistsException $fileExistsException) {
-            $success = $storage->update($storageTestFile, 'XBACKBONE_TEST_FILE');
+            $success = $storage->update($storageTestFile, 'TEST_FILE');
         }
 
         if (!$success) {
@@ -212,11 +212,8 @@ $app->post('/', function (Request $request, Response $response, \DI\Container $c
 
     // re-apply the previous theme if is present
     $css = $db->query('SELECT `value` FROM `settings` WHERE `key` = \'css\'')->fetch()->value ?? null;
-    if ($css) {
-        $content = file_get_contents($css);
-        if ($content !== false) {
-            file_put_contents(BASE_DIR.'static/bootstrap/css/bootstrap.min.css', $content);
-        }
+    if ($css && strpos($css, '|') !== false) {
+        $container->make(\App\Web\Theme::class)->applyTheme($css);
     }
 
     // if is upgrading and existing installation, put it out maintenance
